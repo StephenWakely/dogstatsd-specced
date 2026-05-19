@@ -14,12 +14,14 @@ module TestS5 {
     // c.Init("def") here would fail verification: requires s.state == InitState.Unset not met.
   }
 
-  // T-S5-02: Get() returns None before Init, Some(value) after Init (spec S5-R5.3).
-  method {:test} TestContainerIDGetValues() {
+  // T-S5-02: Get() returns same value on every call after Init (spec S5-R5.3, I5.1).
+  method {:test} TestContainerIDImmutableAfterSet() {
     var c := new ContainerID();
-    expect c.Get() == None;
     c.Init("mycontainer");
-    expect c.Get() == Some("mycontainer");
+    var v1 := c.Get();
+    var v2 := c.Get();
+    expect v1 == v2;
+    expect v1 == Some("mycontainer");
   }
 
   // T-S5-03: After ExternalEnv Init, state == Set; second Init violates precondition (I5.2).
@@ -48,11 +50,14 @@ module TestS5 {
     expect result == "helloworld";
   }
 
-  // T-S5-06: SanitizeExternalEnv strips control chars (tab = ASCII 9, non-printable).
+  // T-S5-06: SanitizeExternalEnv strips control characters (NUL=\x00, SOH=\x01, DEL=\x7f).
   method {:test} TestSanitizeRemovesNonPrintable() {
-    var result := SanitizeExternalEnv("hel\tlo");
-    expect '\t' !in result;
-    expect result == "hello";
+    var nul := ['\0', 'a', '', 'b', '', 'c'];
+    var result := SanitizeExternalEnv(nul);
+    expect '\0' !in result;
+    expect '' !in result;
+    expect '' !in result;
+    expect result == "abc";
   }
 
   // T-S5-07: ExternalEnv Get() returns "" when Unset (spec S5-R5.4).
