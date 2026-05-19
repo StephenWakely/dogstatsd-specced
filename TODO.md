@@ -43,27 +43,27 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 ---
 
-## Phase 3: Wire Format Serialization (S6)
+## Phase 3: Wire Format Serialization (S6) ✅
 
 `src/WireFormat.dfy`
 
-- [ ] **[S6-W01]** Define `WireMetric` record: `name: string`, `value: string`, `metricType: MetricType`, `rate: Option<real>`, `tags: seq<string>`, `containerID: Option<string>`, `externalEnv: Option<string>`, `cardinality: TagCardinality`
-- [ ] **[S6-W02]** Implement `SerializeName(name: string): seq<byte>` (name as ASCII bytes)
-- [ ] **[S6-W03]** Implement `SerializeValue(value: string): seq<byte>` (value as ASCII bytes)
-- [ ] **[S6-W04]** Implement `SerializeType(t: MetricType): seq<byte>` producing `g/c/h/d/s/ms`
-- [ ] **[S6-W05]** Implement `SerializeRate(rate: Option<real>): seq<byte>` — empty if None or rate==1.0; `|@<rate>` if rate < 1.0 (S3, allium.md §Wire Format Ordering R3)
-- [ ] **[S6-W06]** Implement `SerializeTags(tags: seq<string>): seq<byte>` — empty if no tags; `|#tag1,tag2,...` if present (S3, allium.md §Wire Format Ordering R4)
-- [ ] **[S6-W07]** Implement `SerializeContainerID(cid: Option<string>): seq<byte>` — `|c:<cid>` if Some (S3, allium.md §Wire Format Ordering R5)
-- [ ] **[S6-W08]** Implement `SerializeExternalEnv(env: Option<string>): seq<byte>` — `|e:<env>` if Some and non-empty (S3, allium.md §Wire Format Ordering R6)
-- [ ] **[S6-W09]** Implement `SerializeCardinality(c: TagCardinality): seq<byte>` — `|card:<level>` if not CardinalityNotSet (S3, allium.md §Wire Format Ordering R7)
-- [ ] **[S6-W10]** Implement `SerializeWireFormat(m: WireMetric): seq<byte>` composing all fields in exact order: `name:value|type[|@rate][|#tags][|c:cid][|e:env][|card:x]\n` (S3-R3.1, allium.md §Wire Format Ordering)
-- [ ] **[S6-W11]** Prove `MetricOrderingLemma`: result of `SerializeWireFormat` starts with `name:value|type` prefix — verifies field ordering invariant (allium.md §MetricOrdering cross-invariant)
-- [ ] **[S6-W12]** Prove `SerializeWireFormatTerminates`: function is total (always returns a value, never loops)
-- [ ] **[S6-W13]** Prove `SerializeWireFormatEndsWithNewline`: last byte is `\n` (0x0A)
-- [ ] **[S6-W14]** Prove `SerializeRateEmpty`: if rate is None or equals 1.0, rate field is absent from output
-- [ ] **[S6-W15]** Prove `SerializeTagsEmpty`: if tags is empty seq, tag field is absent from output
-- [ ] **[S6-W16]** Prove `SerializeWireFormatBounded(m: WireMetric, maxSize: nat)`: precondition that metric serializes within maxSize (used in buffer write precondition)
-- [ ] **[S6-W17]** Verify `src/WireFormat.dfy` with `dafny verify src/WireFormat.dfy`
+- [x] **[S6-W01]** Define `WireMetric` record: `name: string`, `value: string`, `metricType: MetricType`, `rate: Option<real>`, `tags: seq<string>`, `containerID: Option<string>`, `externalEnv: Option<string>`, `cardinality: TagCardinality`
+- [x] **[S6-W02]** Implement `SerializeName(name: string): seq<byte>` (name as ASCII bytes)
+- [x] **[S6-W03]** Implement `SerializeValue(value: string): seq<byte>` (value as ASCII bytes)
+- [x] **[S6-W04]** Implement `SerializeType(t: MetricType): seq<byte>` producing `g/c/h/d/s/ms`
+- [x] **[S6-W05]** Implement `SerializeRate(rate: Option<real>): seq<byte>` — empty if None or rate==1.0; `|@<rate>` if rate < 1.0 (S3, allium.md §Wire Format Ordering R3)
+- [x] **[S6-W06]** Implement `SerializeTags(tags: seq<string>): seq<byte>` — empty if no tags; `|#tag1,tag2,...` if present (S3, allium.md §Wire Format Ordering R4)
+- [x] **[S6-W07]** Implement `SerializeContainerID(cid: Option<string>): seq<byte>` — `|c:<cid>` if Some (S3, allium.md §Wire Format Ordering R5)
+- [x] **[S6-W08]** Implement `SerializeExternalEnv(env: Option<string>): seq<byte>` — `|e:<env>` if Some and non-empty (S3, allium.md §Wire Format Ordering R6)
+- [x] **[S6-W09]** Implement `SerializeCardinality(c: TagCardinality): seq<byte>` — `|card:<level>` if not CardinalityNotSet (S3, allium.md §Wire Format Ordering R7)
+- [x] **[S6-W10]** Implement `SerializeWireFormat(m: WireMetric): seq<byte>` composing all fields in exact order: `name:value|type[|@rate][|#tags][|c:cid][|e:env][|card:x]\n` (S3-R3.1, allium.md §Wire Format Ordering)
+- [x] **[S6-W11]** Prove `MetricOrderingLemma`: result of `SerializeWireFormat` starts with `name:value|type` prefix — verifies field ordering invariant (allium.md §MetricOrdering cross-invariant)
+- [x] **[S6-W12]** Prove `SerializeWireFormatTerminates`: function is total (always returns a value, never loops)
+- [x] **[S6-W13]** Prove `SerializeWireFormatEndsWithNewline`: last byte is `\n` (0x0A)
+- [x] **[S6-W14]** Prove `SerializeRateEmpty`: if rate is None or equals 1.0, rate field is absent from output
+- [x] **[S6-W15]** Prove `SerializeTagsEmpty`: if tags is empty seq, tag field is absent from output
+- [x] **[S6-W16]** Prove `SerializeWireFormatBounded(m: WireMetric, maxSize: nat)`: precondition that metric serializes within maxSize (used in buffer write precondition)
+- [x] **[S6-W17]** Verify `src/WireFormat.dfy` with `dafny verify src/WireFormat.dfy` — **16 verified, 0 errors**
 
 ---
 
@@ -326,8 +326,8 @@ Verification must pass (`dafny verify`) before any task is complete.
 ## Phase 12: Final Verification Pass
 
 - [x] **[FV-01]** `dafny verify src/Types.dfy` — zero errors (7 verified)
-- [ ] **[FV-02]** `dafny verify src/Errors.dfy` — zero errors
-- [ ] **[FV-03]** `dafny verify src/WireFormat.dfy` — zero errors
+- [x] **[FV-02]** `dafny verify src/Errors.dfy` — zero errors
+- [x] **[FV-03]** `dafny verify src/WireFormat.dfy` — zero errors (16 verified)
 - [x] **[FV-04]** `dafny verify src/Buffer.dfy` — zero errors (11 verified)
 - [ ] **[FV-05]** `dafny verify src/BufferPool.dfy` — zero errors
 - [ ] **[FV-06]** `dafny verify src/Aggregator.dfy` — zero errors
@@ -356,7 +356,7 @@ Verification must pass (`dafny verify`) before any task is complete.
 | `NoContainerIDChange` (I5.1) | S5-S07 | [ ] |
 | `NoExternalEnvChange` (I5.2) | S5-S16 | [ ] |
 | `TransactionalWrites` (I3.3) | S3-B05 | [ ] |
-| `MetricOrdering` (S6) | S6-W11 + CX-01 | [ ] |
+| `MetricOrdering` (S6) | S6-W11 + CX-01 | [x] S6-W11 ✅ |
 | `AggregationSemantics` | S2-A16 + S2-A18 + S2-A14 | [ ] |
 | `ClosureFinality` | S1-C19 + CX-05 | [ ] |
 | `ShardingDeterminism` | S2-A09 | [ ] |
