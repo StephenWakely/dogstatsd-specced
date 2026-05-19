@@ -5,7 +5,6 @@ include "Buffer.dfy"
 module BufferPool {
 
   import Buf = Buffer
-  import opened Errors
 
   // Option for Borrow return (S3-R3.4)
   datatype Option<T> = None | Some(value: T)
@@ -16,10 +15,12 @@ module BufferPool {
     var capacity: nat
 
     // S3-P02: capacity invariant (TLA+ poolSize <= BufferPoolCapacity, I3.4)
+    // Also tracks element validity so borrowers get only valid Buffers
     predicate Valid()
-      reads this
+      reads this, set b | b in pool :: b
     {
-      |pool| <= capacity
+      |pool| <= capacity &&
+      forall b | b in pool :: b.Valid()
     }
 
     // S3-P03: pre-fill pool to capacity with empty Buffers
@@ -34,6 +35,7 @@ module BufferPool {
       while i < cap
         invariant 0 <= i <= cap
         invariant |p| == i
+        invariant forall j :: 0 <= j < i ==> p[j].Valid()
       {
         var b := new Buf.Buffer.New(bufferMaxSize, bufferMaxElements);
         p := p + [b];
@@ -44,6 +46,8 @@ module BufferPool {
 
     // S3-P04: non-blocking borrow (spec S3-R3.4)
     // Returns Some(b) if pool non-empty, pops front; None if empty — never blocks
+    // Note: P05 (BorrowNeverBlocks lemma) is outside class; P06 (Return) follows here
+    // — spec ordering is S3-P04/P05/P06 but file groups class members together.
     method Borrow() returns (r: Option<Buf.Buffer>)
       requires Valid()
       modifies this
@@ -52,6 +56,7 @@ module BufferPool {
         r.Some? && |pool| == old(|pool|) - 1     // popped one
       ensures old(|pool|) == 0 ==>
         r.None? && |pool| == old(|pool|)          // unchanged
+      ensures r.Some? ==> r.value.Valid()         // borrower gets valid buffer
     {
       if |pool| == 0 {
         r := None;
@@ -65,6 +70,7 @@ module BufferPool {
     // Pushes b if room; discards b if pool already at capacity — never blocks
     method Return(b: Buf.Buffer)
       requires Valid()
+      requires b.Valid()
       modifies this
       ensures Valid()
       ensures old(|pool|) < capacity ==>
