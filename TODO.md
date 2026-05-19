@@ -14,21 +14,21 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 ---
 
-## Phase 1: Types and Constants (S6)
+## Phase 1: Types and Constants (S6) ✅
 
 `src/Types.dfy`
 
-- [ ] **[S6-T01]** Define `MetricType` datatype: `Gauge | Count | Histogram | Distribution | Set | Timing`
-- [ ] **[S6-T02]** Define type symbol function `MetricTypeSymbol(t: MetricType): string` mapping to `g/c/h/d/s/ms` (S6, allium.md §Wire Format Summary)
-- [ ] **[S6-T03]** Define `TransportMode` datatype: `UDP | UDS | Pipe` (S1, allium.md §Entities)
-- [ ] **[S6-T04]** Define `TagCardinality` datatype: `CardinalityNotSet | CardinalityNone | CardinalityLow | CardinalityOrchestrator | CardinalityHigh` (S6, allium.md §Tag Cardinality Levels)
-- [ ] **[S6-T05]** Define cardinality string function `CardinalityString(c: TagCardinality): Option<string>` returning None for `CardinalityNotSet`, `Some("none"/"low"/"orchestrator"/"high")` for others
-- [ ] **[S6-T06]** Define `MetricContext` as a record: `name: string`, `tags: seq<string>` (S2, allium.md §Entities)
-- [ ] **[S6-T07]** Define configuration constants: `UDP_MAX_BYTES := 1432`, `UDS_MAX_BYTES := 8192`, `DEFAULT_BUFFER_FLUSH_INTERVAL_MS := 100`, `DEFAULT_AGGREGATION_FLUSH_INTERVAL_MS := 2000`, `DEFAULT_SENDER_QUEUE_SIZE := 512`, `DEFAULT_BUFFER_POOL_CAPACITY := 2048` (S6, allium.md §Key Configuration Options)
-- [ ] **[S6-T08]** Define `DogStatsDConfig` record: `maxBytesPerPayload: nat`, `bufferFlushIntervalMs: nat`, `aggregationFlushIntervalMs: nat`, `senderQueueSize: nat`, `bufferPoolCapacity: nat`, `aggregationEnabled: bool`, `extendedAggregation: bool`, `maxSamplesPerContext: int`, `originDetection: bool`, `cardinality: TagCardinality`
-- [ ] **[S6-T09]** Define `DefaultConfig()` function returning config with all defaults from allium.md §Key Configuration Options
-- [ ] **[S6-T10]** Prove `DefaultConfig().maxBytesPerPayload == UDP_MAX_BYTES` lemma (ties constants to config)
-- [ ] **[S6-T11]** Verify `src/Types.dfy` with `dafny verify src/Types.dfy`
+- [x] **[S6-T01]** Define `MetricType` datatype: `Gauge | Count | Histogram | Distribution | Set | Timing`
+- [x] **[S6-T02]** Define type symbol function `MetricTypeSymbol(t: MetricType): string` mapping to `g/c/h/d/s/ms` (S6, allium.md §Wire Format Summary)
+- [x] **[S6-T03]** Define `TransportMode` datatype: `UDP | UDS | Pipe` (S1, allium.md §Entities)
+- [x] **[S6-T04]** Define `TagCardinality` datatype: `CardinalityNotSet | CardinalityNone | CardinalityLow | CardinalityOrchestrator | CardinalityHigh` (S6, allium.md §Tag Cardinality Levels)
+- [x] **[S6-T05]** Define cardinality string function `CardinalityString(c: TagCardinality): Option<string>` returning None for `CardinalityNotSet`, `Some("none"/"low"/"orchestrator"/"high")` for others
+- [x] **[S6-T06]** Define `MetricContext` as a record: `name: string`, `tags: seq<string>` (S2, allium.md §Entities)
+- [x] **[S6-T07]** Define configuration constants: `UDP_MAX_BYTES := 1432`, `UDS_MAX_BYTES := 8192`, `DEFAULT_BUFFER_FLUSH_INTERVAL_MS := 100`, `DEFAULT_AGGREGATION_FLUSH_INTERVAL_MS := 2000`, `DEFAULT_SENDER_QUEUE_SIZE := 512`, `DEFAULT_BUFFER_POOL_CAPACITY := 2048` (S6, allium.md §Key Configuration Options)
+- [x] **[S6-T08]** Define `DogStatsDConfig` record: `maxBytesPerPayload: nat`, `bufferFlushIntervalMs: nat`, `aggregationFlushIntervalMs: nat`, `senderQueueSize: nat`, `bufferPoolCapacity: nat`, `aggregationEnabled: bool`, `extendedAggregation: bool`, `maxSamplesPerContext: int`, `originDetection: bool`, `cardinality: TagCardinality`
+- [x] **[S6-T09]** Define `DefaultConfig()` function returning config with all defaults from allium.md §Key Configuration Options
+- [x] **[S6-T10]** Prove `DefaultConfig().maxBytesPerPayload == UDP_MAX_BYTES` lemma (ties constants to config)
+- [x] **[S6-T11]** Verify `src/Types.dfy` with `dafny verify src/Types.dfy` — **7 verified, 0 errors**
 
 ---
 
@@ -325,7 +325,7 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 ## Phase 12: Final Verification Pass
 
-- [ ] **[FV-01]** `dafny verify src/Types.dfy` — zero errors
+- [x] **[FV-01]** `dafny verify src/Types.dfy` — zero errors (7 verified)
 - [ ] **[FV-02]** `dafny verify src/Errors.dfy` — zero errors
 - [ ] **[FV-03]** `dafny verify src/WireFormat.dfy` — zero errors
 - [ ] **[FV-04]** `dafny verify src/Buffer.dfy` — zero errors
