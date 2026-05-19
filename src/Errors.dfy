@@ -9,7 +9,7 @@ module Errors {
     | MessageTooLongError       // single metric exceeds maxBytesPerPayload
 
   // S6-E02: human-readable error description
-  function method ErrorMessage(e: DogStatsDError): string
+  function ErrorMessage(e: DogStatsDError): string
   {
     match e
     case ErrNoClient             => "operation on nil or closed client"
