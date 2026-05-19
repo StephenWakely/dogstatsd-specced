@@ -14,12 +14,15 @@ module TestS5 {
     // c.Init("def") here would fail verification: requires s.state == InitState.Unset not met.
   }
 
-  // T-S5-02: Get() returns None before Init, Some(value) after Init (spec S5-R5.3).
-  method {:test} TestContainerIDGetValues() {
+  // T-S5-02: Get() returns None before Init, same value on every call after Init (spec S5-R5.3, I5.1).
+  method {:test} TestContainerIDImmutableAfterSet() {
     var c := new ContainerID();
-    expect c.Get() == None;
+    expect c.Get() == None;   // Unset -> None per S5-R5.3
     c.Init("mycontainer");
-    expect c.Get() == Some("mycontainer");
+    var v1 := c.Get();
+    var v2 := c.Get();
+    expect v1 == v2;
+    expect v1 == Some("mycontainer");
   }
 
   // T-S5-03: After ExternalEnv Init, state == Set; second Init violates precondition (I5.2).
@@ -43,16 +46,23 @@ module TestS5 {
 
   // T-S5-05: SanitizeExternalEnv strips '|' from raw value (spec S5-R5.2).
   method {:test} TestSanitizeRemovesPipe() {
-    var result := SanitizeExternalEnv("hello|world");
+    var result := SanitizeExternalEnv("foo|bar");
     expect '|' !in result;
-    expect result == "helloworld";
+    expect result == "foobar";
   }
 
-  // T-S5-06: SanitizeExternalEnv strips control chars (tab = ASCII 9, non-printable).
+  // T-S5-06: SanitizeExternalEnv strips control characters (NUL=0, SOH=1, DEL=127).
+  // Uses (n as char) casts to avoid embedding literal invisible bytes in source.
   method {:test} TestSanitizeRemovesNonPrintable() {
-    var result := SanitizeExternalEnv("hel\tlo");
-    expect '\t' !in result;
-    expect result == "hello";
+    var nul: char := '\0';
+    var soh: char := (1 as char);
+    var del: char := (127 as char);
+    var input: string := [nul, 'a', soh, 'b', del, 'c'];
+    var result := SanitizeExternalEnv(input);
+    expect nul !in result;
+    expect soh !in result;
+    expect del !in result;
+    expect result == "abc";
   }
 
   // T-S5-07: ExternalEnv Get() returns "" when Unset (spec S5-R5.4).
