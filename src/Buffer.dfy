@@ -1,12 +1,12 @@
 // src/Buffer.dfy — S3: transactional byte buffer
 // Spec: allium.md §Part 3 (S3), TLA+ model.tla BufferNotOverflow, TransactionalWrites
 include "Errors.dfy"
+include "Types.dfy"
 
 module Buffer {
 
   import opened Errors
-
-  type byte = bv8
+  import opened Types
 
   // Unit type for Result<Unit> returns (no stdlib)
   datatype Unit = Unit

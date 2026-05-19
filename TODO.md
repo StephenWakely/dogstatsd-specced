@@ -67,29 +67,29 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 ---
 
-## Phase 4: Buffer (S3)
+## Phase 4: Buffer (S3) ✅
 
 `src/Buffer.dfy`
 
-- [ ] **[S3-B01]** Define `Buffer` class/record: `data: seq<byte>`, `len: nat`, `maxSize: nat`, `elementCount: nat`, `maxElements: nat` (TLA+: `bufferLen`, `elementCount`)
-- [ ] **[S3-B02]** Define `Buffer.Valid()` predicate: `len <= maxSize && elementCount <= maxElements && |data| == maxSize` (TLA+ invariant: `BufferNotOverflow`)
-- [ ] **[S3-B03]** Implement `Buffer.New(maxSize: nat, maxElements: nat): Buffer` constructor — returns empty buffer, proves Valid()
-- [ ] **[S3-B04]** Implement `Buffer.WriteMetric(metric: seq<byte>): Result<(), DogStatsDError>` — transactional append (S3-R3.1, R3.2)
+- [x] **[S3-B01]** Define `Buffer` class/record: `data: seq<byte>`, `len: nat`, `maxSize: nat`, `elementCount: nat`, `maxElements: nat` (TLA+: `bufferLen`, `elementCount`)
+- [x] **[S3-B02]** Define `Buffer.Valid()` predicate: `len <= maxSize && elementCount <= maxElements && |data| == maxSize` (TLA+ invariant: `BufferNotOverflow`)
+- [x] **[S3-B03]** Implement `Buffer.New(maxSize: nat, maxElements: nat): Buffer` constructor — returns empty buffer, proves Valid()
+- [x] **[S3-B04]** Implement `Buffer.WriteMetric(metric: seq<byte>): Result<(), DogStatsDError>` — transactional append (S3-R3.1, R3.2)
   - Precondition: `Valid()`
   - If `len + |metric| > maxSize`: return `Err(ErrorSenderChannelFull)`, buffer UNCHANGED (S3-R3.2: rollback)
   - If `elementCount >= maxElements`: return `Err(ErrorSenderChannelFull)`, buffer UNCHANGED
   - Otherwise: append metric bytes, increment `len` and `elementCount`, return `Ok(())`
   - Postcondition: `Valid()`
-- [ ] **[S3-B05]** Prove `WriteMetricRollback`: if result is Err, `buf == old(buf)` — buffer fully unchanged (TLA+ `TransactionalWrites`, I3.3)
-- [ ] **[S3-B06]** Prove `WriteMetricAppend`: if result is Ok, `buf.len == old(buf.len) + |metric|` and `buf.elementCount == old(buf.elementCount) + 1`
-- [ ] **[S3-B07]** Prove `WriteMetricPreservesValid`: WriteMetric preserves `Valid()` in all cases
-- [ ] **[S3-B08]** Prove `NoBufferOverflow`: `buf.len <= buf.maxSize` is invariant of all Buffer operations (TLA+ `BufferNotOverflow`)
-- [ ] **[S3-B09]** Prove `NoElementOverflow`: `buf.elementCount <= buf.maxElements` is invariant (TLA+ `elementCount <= MaxBufferElements`)
-- [ ] **[S3-B10]** Implement `Buffer.Reset()` — sets `len = 0`, `elementCount = 0`, `data = seq of zeros`; postcondition: Valid(), len == 0
-- [ ] **[S3-B11]** Prove `ResetProducesEmpty`: after Reset(), `len == 0 && elementCount == 0`
-- [ ] **[S3-B12]** Implement `Buffer.IsEmpty(): bool` — returns `len == 0`
-- [ ] **[S3-B13]** Implement `Buffer.Bytes(): seq<byte>` — returns `data[..len]` (the live portion)
-- [ ] **[S3-B14]** Verify `src/Buffer.dfy` with `dafny verify src/Buffer.dfy`
+- [x] **[S3-B05]** Prove `WriteMetricRollback`: if result is Err, `buf == old(buf)` — buffer fully unchanged (TLA+ `TransactionalWrites`, I3.3)
+- [x] **[S3-B06]** Prove `WriteMetricAppend`: if result is Ok, `buf.len == old(buf.len) + |metric|` and `buf.elementCount == old(buf.elementCount) + 1`
+- [x] **[S3-B07]** Prove `WriteMetricPreservesValid`: WriteMetric preserves `Valid()` in all cases
+- [x] **[S3-B08]** Prove `NoBufferOverflow`: `buf.len <= buf.maxSize` is invariant of all Buffer operations (TLA+ `BufferNotOverflow`)
+- [x] **[S3-B09]** Prove `NoElementOverflow`: `buf.elementCount <= buf.maxElements` is invariant (TLA+ `elementCount <= MaxBufferElements`)
+- [x] **[S3-B10]** Implement `Buffer.Reset()` — sets `len = 0`, `elementCount = 0`, `data = seq of zeros`; postcondition: Valid(), len == 0
+- [x] **[S3-B11]** Prove `ResetProducesEmpty`: after Reset(), `len == 0 && elementCount == 0`
+- [x] **[S3-B12]** Implement `Buffer.IsEmpty(): bool` — returns `len == 0`
+- [x] **[S3-B13]** Implement `Buffer.Bytes(): seq<byte>` — returns `data[..len]` (the live portion)
+- [x] **[S3-B14]** Verify `src/Buffer.dfy` with `dafny verify src/Buffer.dfy` — **11 verified, 0 errors**
 
 ---
 
@@ -328,7 +328,7 @@ Verification must pass (`dafny verify`) before any task is complete.
 - [x] **[FV-01]** `dafny verify src/Types.dfy` — zero errors (7 verified)
 - [ ] **[FV-02]** `dafny verify src/Errors.dfy` — zero errors
 - [ ] **[FV-03]** `dafny verify src/WireFormat.dfy` — zero errors
-- [ ] **[FV-04]** `dafny verify src/Buffer.dfy` — zero errors
+- [x] **[FV-04]** `dafny verify src/Buffer.dfy` — zero errors (11 verified)
 - [ ] **[FV-05]** `dafny verify src/BufferPool.dfy` — zero errors
 - [ ] **[FV-06]** `dafny verify src/Aggregator.dfy` — zero errors
 - [ ] **[FV-07]** `dafny verify src/Singletons.dfy` — zero errors
