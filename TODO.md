@@ -36,10 +36,10 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 `src/Errors.dfy`
 
-- [ ] **[S6-E01]** Define `DogStatsDError` datatype: `ErrNoClient | ErrorInputChannelFull | ErrorSenderChannelFull | MessageTooLongError` (S6, allium.md §Error Types)
-- [ ] **[S6-E02]** Define error message function `ErrorMessage(e: DogStatsDError): string` for human-readable descriptions
-- [ ] **[S6-E03]** Define `Result<T>` as `datatype Result<T> = Ok(value: T) | Err(error: DogStatsDError)` (or use Dafny standard library if available)
-- [ ] **[S6-E04]** Verify `src/Errors.dfy` with `dafny verify src/Errors.dfy`
+- [x] **[S6-E01]** Define `DogStatsDError` datatype: `ErrNoClient | ErrorInputChannelFull | ErrorSenderChannelFull | MessageTooLongError` (S6, allium.md §Error Types)
+- [x] **[S6-E02]** Define error message function `ErrorMessage(e: DogStatsDError): string` for human-readable descriptions
+- [x] **[S6-E03]** Define `Result<T>` as `datatype Result<T> = Ok(value: T) | Err(error: DogStatsDError)` (or use Dafny standard library if available)
+- [x] **[S6-E04]** Verify `src/Errors.dfy` with `dafny verify src/Errors.dfy`
 
 ---
 
