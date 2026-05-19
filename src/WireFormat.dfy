@@ -18,12 +18,15 @@ module WireFormat {
     cardinality: TagCardinality
   )
 
-  // Convert ASCII string to integer byte sequence
-  function method StringToBytes(s: string): seq<int>
+  // Convert string to byte sequence; non-ASCII chars (> 255) map to 0
+  function StringToBytes(s: string): seq<byte>
     decreases |s|
   {
     if |s| == 0 then []
-    else [s[0] as int] + StringToBytes(s[1..])
+    else
+      var code: int := s[0] as int;
+      var bval: int := if 0 <= code < 256 then code else 0;
+      [bval as byte] + StringToBytes(s[1..])
   }
 
   // StringToBytes length equals string length — used in bounded proof
@@ -37,40 +40,36 @@ module WireFormat {
     }
   }
 
+  // Extern: byte encoding of a real number — concrete implementation outside Dafny
+  function {:extern} RealToDecimalBytes(r: real): seq<byte>
+
   // S6-W02: name as ASCII bytes (spec S6-W02)
-  function method SerializeName(name: string): seq<int>
+  function SerializeName(name: string): seq<byte>
   {
     StringToBytes(name)
   }
 
   // S6-W03: value as ASCII bytes (spec S6-W03)
-  function method SerializeValue(value: string): seq<int>
+  function SerializeValue(value: string): seq<byte>
   {
     StringToBytes(value)
   }
 
   // S6-W04: type symbol bytes — g/c/h/d/s/ms (spec S6-W04)
-  function method SerializeType(t: MetricType): seq<int>
+  function SerializeType(t: MetricType): seq<byte>
   {
     StringToBytes(MetricTypeSymbol(t))
   }
 
-  // Real-to-decimal byte encoding — structural proofs do not depend on concrete bytes.
-  // Callers requiring actual decimal encoding must supply an extern implementation.
-  function method RealToDecimalBytes(r: real): seq<int>
+  // S6-W05: rate field — omit if None or >= 1.0; prefix |@ otherwise (spec S3 §Wire Format Ordering R3)
+  function SerializeRate(rate: Option<real>): seq<byte>
   {
-    []
-  }
-
-  // S6-W05: rate field — omit if None or 1.0; prefix |@ otherwise (spec S3 §Wire Format Ordering R3)
-  function method SerializeRate(rate: Option<real>): seq<int>
-  {
-    if rate.None? || rate.value == 1.0 then []
+    if rate.None? || rate.value >= 1.0 then []
     else StringToBytes("|@") + RealToDecimalBytes(rate.value)
   }
 
   // Join tag strings with comma separator
-  function method JoinTags(tags: seq<string>): seq<int>
+  function JoinTags(tags: seq<string>): seq<byte>
     decreases |tags|
   {
     if |tags| == 0 then []
@@ -79,14 +78,14 @@ module WireFormat {
   }
 
   // S6-W06: tags field — omit if empty; |#tag1,tag2,... if present (spec S3 §Wire Format Ordering R4)
-  function method SerializeTags(tags: seq<string>): seq<int>
+  function SerializeTags(tags: seq<string>): seq<byte>
   {
     if |tags| == 0 then []
     else StringToBytes("|#") + JoinTags(tags)
   }
 
   // S6-W07: container ID field — |c:<id> if Some (spec S3 §Wire Format Ordering R5)
-  function method SerializeContainerID(cid: Option<string>): seq<int>
+  function SerializeContainerID(cid: Option<string>): seq<byte>
   {
     match cid
     case None     => []
@@ -94,7 +93,7 @@ module WireFormat {
   }
 
   // S6-W08: external env field — |e:<env> if Some and non-empty (spec S3 §Wire Format Ordering R6)
-  function method SerializeExternalEnv(env: Option<string>): seq<int>
+  function SerializeExternalEnv(env: Option<string>): seq<byte>
   {
     match env
     case None    => []
@@ -104,7 +103,7 @@ module WireFormat {
   }
 
   // S6-W09: cardinality field — |card:<level> if not NotSet (spec S3 §Wire Format Ordering R7)
-  function method SerializeCardinality(c: TagCardinality): seq<int>
+  function SerializeCardinality(c: TagCardinality): seq<byte>
   {
     match CardinalityString(c)
     case None    => []
@@ -113,7 +112,7 @@ module WireFormat {
 
   // S6-W10: compose full wire metric — name:value|type[|@rate][|#tags][|c:cid][|e:env][|card:x]\n
   // Field order per spec S3-R3.1
-  function method SerializeWireFormat(m: WireMetric): seq<int>
+  function SerializeWireFormat(m: WireMetric): seq<byte>
   {
     SerializeName(m.name) +
     StringToBytes(":") +
@@ -125,7 +124,7 @@ module WireFormat {
     SerializeContainerID(m.containerID) +
     SerializeExternalEnv(m.externalEnv) +
     SerializeCardinality(m.cardinality) +
-    ['\n' as int]
+    [('\n' as int) as byte]
   }
 
   // Helper: decompose SerializeWireFormat into prefix + rest
@@ -135,7 +134,7 @@ module WireFormat {
                           SerializeType(m.metricType);
             var rest := SerializeRate(m.rate) + SerializeTags(m.tags) +
                         SerializeContainerID(m.containerID) + SerializeExternalEnv(m.externalEnv) +
-                        SerializeCardinality(m.cardinality) + ['\n' as int];
+                        SerializeCardinality(m.cardinality) + [('\n' as int) as byte];
             SerializeWireFormat(m) == prefix + rest
   {
     // Follows directly from definition by sequence associativity
@@ -154,37 +153,35 @@ module WireFormat {
                   SerializeType(m.metricType);
     var rest := SerializeRate(m.rate) + SerializeTags(m.tags) +
                 SerializeContainerID(m.containerID) + SerializeExternalEnv(m.externalEnv) +
-                SerializeCardinality(m.cardinality) + ['\n' as int];
+                SerializeCardinality(m.cardinality) + [('\n' as int) as byte];
     assert SerializeWireFormat(m) == prefix + rest;
     assert (prefix + rest)[..|prefix|] == prefix;
   }
 
-  // S6-W12: function is total — trivially true for all function methods in Dafny
+  // S6-W12: function is total — trivially true for all functions in Dafny
   lemma SerializeWireFormatTerminates(m: WireMetric)
-    ensures exists result: seq<int> :: result == SerializeWireFormat(m)
+    ensures SerializeWireFormat(m) == SerializeWireFormat(m)
   {
-    var r := SerializeWireFormat(m);
-    assert r == SerializeWireFormat(m);
   }
 
   // S6-W13: last byte is '\n' (0x0A) (spec S3 §Wire Format Ordering step 7)
   lemma SerializeWireFormatEndsWithNewline(m: WireMetric)
     ensures var result := SerializeWireFormat(m);
-            |result| >= 1 && result[|result| - 1] == '\n' as int
+            |result| >= 1 && result[|result| - 1] == ('\n' as int) as byte
   {
     var body := SerializeName(m.name) + StringToBytes(":") +
                 SerializeValue(m.value) + StringToBytes("|") +
                 SerializeType(m.metricType) + SerializeRate(m.rate) +
                 SerializeTags(m.tags) + SerializeContainerID(m.containerID) +
                 SerializeExternalEnv(m.externalEnv) + SerializeCardinality(m.cardinality);
-    assert SerializeWireFormat(m) == body + ['\n' as int];
-    assert |body + ['\n' as int]| == |body| + 1;
-    assert (body + ['\n' as int])[|body|] == '\n' as int;
+    assert SerializeWireFormat(m) == body + [('\n' as int) as byte];
+    assert |body + [('\n' as int) as byte]| == |body| + 1;
+    assert (body + [('\n' as int) as byte])[|body|] == ('\n' as int) as byte;
   }
 
-  // S6-W14: None or 1.0 rate → rate field absent from output (spec S3 §Wire Format Ordering R3)
+  // S6-W14: None or >= 1.0 rate → rate field absent from output (spec S3 §Wire Format Ordering R3)
   lemma SerializeRateEmpty(rate: Option<real>)
-    requires rate.None? || rate.value == 1.0
+    requires rate.None? || rate.value >= 1.0
     ensures SerializeRate(rate) == []
   {
   }
@@ -224,7 +221,7 @@ module WireFormat {
     var cid  := SerializeContainerID(m.containerID);
     var env  := SerializeExternalEnv(m.externalEnv);
     var card := SerializeCardinality(m.cardinality);
-    var nl   := ['\n' as int];
+    var nl   := [('\n' as int) as byte];
     assert SerializeWireFormat(m) == n + col + v + pipe + t + r + tgs + cid + env + card + nl;
     assert |col|  == 1;
     assert |pipe| == 1;

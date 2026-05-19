@@ -63,7 +63,7 @@ Verification must pass (`dafny verify`) before any task is complete.
 - [ ] **[S6-W14]** Prove `SerializeRateEmpty`: if rate is None or equals 1.0, rate field is absent from output
 - [ ] **[S6-W15]** Prove `SerializeTagsEmpty`: if tags is empty seq, tag field is absent from output
 - [ ] **[S6-W16]** Prove `SerializeWireFormatBounded(m: WireMetric, maxSize: nat)`: precondition that metric serializes within maxSize (used in buffer write precondition)
-- [ ] **[S6-W17]** Verify `src/WireFormat.dfy` with `dafny verify src/WireFormat.dfy`
+- [x] **[S6-W17]** Verify `src/WireFormat.dfy` with `dafny verify src/WireFormat.dfy`
 
 ---
 

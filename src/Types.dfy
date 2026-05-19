@@ -4,11 +4,14 @@ module Types {
   // Generic option type (no stdlib in Dafny 3.x)
   datatype Option<T> = None | Some(value: T)
 
+  // Byte type: values 0..255 for wire serialization
+  type byte = x: int | 0 <= x < 256 witness 0
+
   // S6-T01: Metric types (spec S6, §Wire Format Summary)
   datatype MetricType = Gauge | Count | Histogram | Distribution | Set | Timing
 
   // S6-T02: Wire format type symbols (spec S6, §Wire Format Summary)
-  function method MetricTypeSymbol(t: MetricType): string {
+  function MetricTypeSymbol(t: MetricType): string {
     match t
     case Gauge        => "g"
     case Count        => "c"
@@ -30,7 +33,7 @@ module Types {
     | CardinalityHigh
 
   // S6-T05: Cardinality wire string; None means omit field (spec S6, §Tag Cardinality Levels)
-  function method CardinalityString(c: TagCardinality): Option<string> {
+  function CardinalityString(c: TagCardinality): Option<string> {
     match c
     case CardinalityNotSet      => None
     case CardinalityNone        => Some("none")
@@ -65,7 +68,7 @@ module Types {
   )
 
   // S6-T09: Default configuration (spec S6, §Key Configuration Options)
-  function method DefaultConfig(): DogStatsDConfig {
+  function DefaultConfig(): DogStatsDConfig {
     DogStatsDConfig(
       maxBytesPerPayload          := UDP_MAX_BYTES,
       bufferFlushIntervalMs       := DEFAULT_BUFFER_FLUSH_INTERVAL_MS,
