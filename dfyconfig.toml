@@ -1,0 +1,4 @@
+[options]
+# Dafny 4.x project configuration for dogstatsd-client
+# Sources in src/, tests in test/
+warn-shadowing = true

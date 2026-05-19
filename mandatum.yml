@@ -1,0 +1,16 @@
+project_dir: /home/stephenwakely/src/dafny/dogstatsd-specced/
+agents_dir: agents                    # path to agents/ scripts directory
+
+max_concurrent: 15   # max agents per role running simultaneously
+caveman: true       # terse agent responses — reduces token usage
+
+agents:
+  coder:
+    type: claude    # "claude" or "codex"
+    additional_instructions: ""
+  reviewer:
+    type: claude
+  tester:
+    type: claude
+  docs_writer:
+    type: claude
