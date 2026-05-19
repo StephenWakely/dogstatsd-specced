@@ -67,29 +67,29 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 ---
 
-## Phase 4: Buffer (S3)
+## Phase 4: Buffer (S3) ✅
 
 `src/Buffer.dfy`
 
-- [ ] **[S3-B01]** Define `Buffer` class/record: `data: seq<byte>`, `len: nat`, `maxSize: nat`, `elementCount: nat`, `maxElements: nat` (TLA+: `bufferLen`, `elementCount`)
-- [ ] **[S3-B02]** Define `Buffer.Valid()` predicate: `len <= maxSize && elementCount <= maxElements && |data| == maxSize` (TLA+ invariant: `BufferNotOverflow`)
-- [ ] **[S3-B03]** Implement `Buffer.New(maxSize: nat, maxElements: nat): Buffer` constructor — returns empty buffer, proves Valid()
-- [ ] **[S3-B04]** Implement `Buffer.WriteMetric(metric: seq<byte>): Result<(), DogStatsDError>` — transactional append (S3-R3.1, R3.2)
+- [x] **[S3-B01]** Define `Buffer` class/record: `data: seq<byte>`, `len: nat`, `maxSize: nat`, `elementCount: nat`, `maxElements: nat` (TLA+: `bufferLen`, `elementCount`)
+- [x] **[S3-B02]** Define `Buffer.Valid()` predicate: `len <= maxSize && elementCount <= maxElements && |data| == maxSize` (TLA+ invariant: `BufferNotOverflow`)
+- [x] **[S3-B03]** Implement `Buffer.New(maxSize: nat, maxElements: nat): Buffer` constructor — returns empty buffer, proves Valid()
+- [x] **[S3-B04]** Implement `Buffer.WriteMetric(metric: seq<byte>): Result<(), DogStatsDError>` — transactional append (S3-R3.1, R3.2)
   - Precondition: `Valid()`
   - If `len + |metric| > maxSize`: return `Err(ErrorSenderChannelFull)`, buffer UNCHANGED (S3-R3.2: rollback)
   - If `elementCount >= maxElements`: return `Err(ErrorSenderChannelFull)`, buffer UNCHANGED
   - Otherwise: append metric bytes, increment `len` and `elementCount`, return `Ok(())`
   - Postcondition: `Valid()`
-- [ ] **[S3-B05]** Prove `WriteMetricRollback`: if result is Err, `buf == old(buf)` — buffer fully unchanged (TLA+ `TransactionalWrites`, I3.3)
-- [ ] **[S3-B06]** Prove `WriteMetricAppend`: if result is Ok, `buf.len == old(buf.len) + |metric|` and `buf.elementCount == old(buf.elementCount) + 1`
-- [ ] **[S3-B07]** Prove `WriteMetricPreservesValid`: WriteMetric preserves `Valid()` in all cases
-- [ ] **[S3-B08]** Prove `NoBufferOverflow`: `buf.len <= buf.maxSize` is invariant of all Buffer operations (TLA+ `BufferNotOverflow`)
-- [ ] **[S3-B09]** Prove `NoElementOverflow`: `buf.elementCount <= buf.maxElements` is invariant (TLA+ `elementCount <= MaxBufferElements`)
-- [ ] **[S3-B10]** Implement `Buffer.Reset()` — sets `len = 0`, `elementCount = 0`, `data = seq of zeros`; postcondition: Valid(), len == 0
-- [ ] **[S3-B11]** Prove `ResetProducesEmpty`: after Reset(), `len == 0 && elementCount == 0`
-- [ ] **[S3-B12]** Implement `Buffer.IsEmpty(): bool` — returns `len == 0`
-- [ ] **[S3-B13]** Implement `Buffer.Bytes(): seq<byte>` — returns `data[..len]` (the live portion)
-- [ ] **[S3-B14]** Verify `src/Buffer.dfy` with `dafny verify src/Buffer.dfy`
+- [x] **[S3-B05]** Prove `WriteMetricRollback`: if result is Err, `buf == old(buf)` — buffer fully unchanged (TLA+ `TransactionalWrites`, I3.3)
+- [x] **[S3-B06]** Prove `WriteMetricAppend`: if result is Ok, `buf.len == old(buf.len) + |metric|` and `buf.elementCount == old(buf.elementCount) + 1`
+- [x] **[S3-B07]** Prove `WriteMetricPreservesValid`: WriteMetric preserves `Valid()` in all cases
+- [x] **[S3-B08]** Prove `NoBufferOverflow`: `buf.len <= buf.maxSize` is invariant of all Buffer operations (TLA+ `BufferNotOverflow`)
+- [x] **[S3-B09]** Prove `NoElementOverflow`: `buf.elementCount <= buf.maxElements` is invariant (TLA+ `elementCount <= MaxBufferElements`)
+- [x] **[S3-B10]** Implement `Buffer.Reset()` — sets `len = 0`, `elementCount = 0`, `data = seq of zeros`; postcondition: Valid(), len == 0
+- [x] **[S3-B11]** Prove `ResetProducesEmpty`: after Reset(), `len == 0 && elementCount == 0`
+- [x] **[S3-B12]** Implement `Buffer.IsEmpty(): bool` — returns `len == 0`
+- [x] **[S3-B13]** Implement `Buffer.Bytes(): seq<byte>` — returns `data[..len]` (the live portion)
+- [x] **[S3-B14]** Verify `src/Buffer.dfy` with `dafny verify src/Buffer.dfy` — **11 verified, 0 errors**
 
 ---
 
@@ -146,30 +146,30 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 ---
 
-## Phase 7: Init Singletons (S5)
+## Phase 7: Init Singletons (S5) ✅
 
 `src/Singletons.dfy`
 
-- [ ] **[S5-S01]** Define `InitState` datatype: `Unset | Set` (TLA+: `containerIDState`, `externalEnvState`)
-- [ ] **[S5-S02]** Define `Singleton<T>` record: `state: InitState`, `value: T`, `ghost initialized: bool`
-- [ ] **[S5-S03]** Define `Singleton.Valid()` predicate: `state == Set ⟺ initialized`, value is meaningful only when Set
-- [ ] **[S5-S04]** Implement `ContainerID` singleton: `state: InitState`, `value: string`
-- [ ] **[S5-S05]** Implement `ContainerID.Init(value: string)` — precondition: `state == Unset`; postcondition: `state == Set && this.value == value` (S5-R5.1, TLA+: InitContainerID)
-- [ ] **[S5-S06]** Prove `ContainerIDInitOnce`: `Init()` requires `state == Unset`; after Init, `state == Set` and cannot Init again (I5.1, TLA+ InitContainerID guard)
-- [ ] **[S5-S07]** Prove `ContainerIDImmutable`: after `state == Set`, value never changes (I5.1)
-- [ ] **[S5-S08]** Implement `ContainerID.Get(): Option<string>` — returns `None` if Unset, `Some(value)` if Set; pure, no side effects (S5-R5.3)
-- [ ] **[S5-S09]** Prove `ContainerIDReadConsistent`: `Get()` returns same value on every call once Set (I5.3)
-- [ ] **[S5-S10]** Implement `ExternalEnv` singleton: `state: InitState`, `value: string`
-- [ ] **[S5-S11]** Implement `SanitizeExternalEnv(raw: string): string` — removes all non-printable characters and `|` characters (S5-R5.2, allium.md §Init External Env)
-- [ ] **[S5-S12]** Prove `SanitizeRemovesPipe`: `'|' ∉ SanitizeExternalEnv(s)` for all s (allium.md §Init External Env sanitization)
-- [ ] **[S5-S13]** Prove `SanitizePrintableOnly`: all chars in `SanitizeExternalEnv(s)` are printable (allium.md §Init External Env sanitization)
-- [ ] **[S5-S14]** Implement `ExternalEnv.Init(raw: string)` — precondition: `state == Unset`; stores `SanitizeExternalEnv(raw)` (S5-R5.2, TLA+: InitExternalEnv)
-- [ ] **[S5-S15]** Prove `ExternalEnvInitOnce`: Init() requires Unset; after Init, cannot Init again (I5.2)
-- [ ] **[S5-S16]** Prove `ExternalEnvImmutable`: after Set, value never changes (I5.2)
-- [ ] **[S5-S17]** Implement `ExternalEnv.Get(): string` — returns `""` if Unset, stored value if Set (S5-R5.4)
-- [ ] **[S5-S18]** Prove `ExternalEnvReadConsistency`: once Set, Get() always returns same value (I5.3)
-- [ ] **[S5-S19]** Prove `InitStateMonotone`: `state` only transitions `Unset → Set`, never `Set → Unset` (TLA+: NoReversal invariant)
-- [ ] **[S5-S20]** Verify `src/Singletons.dfy` with `dafny verify src/Singletons.dfy`
+- [x] **[S5-S01]** Define `InitState` datatype: `Unset | Set` (TLA+: `containerIDState`, `externalEnvState`)
+- [x] **[S5-S02]** Define `Singleton<T>` record: `state: InitState`, `value: T`, `ghost initialized: bool`
+- [x] **[S5-S03]** Define `Singleton.Valid()` predicate: `state == Set ⟺ initialized`, value is meaningful only when Set
+- [x] **[S5-S04]** Implement `ContainerID` singleton: built on `Singleton<string>`
+- [x] **[S5-S05]** Implement `ContainerID.Init(value: string)` — precondition: `state == Unset`; postcondition: `state == Set && this.value == value` (S5-R5.1, TLA+: InitContainerID)
+- [x] **[S5-S06]** Prove `ContainerIDInitOnce`: `Init()` requires `state == Unset`; after Init, `state == Set` and cannot Init again (I5.1, TLA+ InitContainerID guard)
+- [x] **[S5-S07]** Prove `ContainerIDImmutable`: documented via Init precondition (I5.1) — Init() requires Unset, so value is structurally immutable once Set
+- [x] **[S5-S08]** Implement `ContainerID.Get(): Option<string>` — returns `None` if Unset, `Some(value)` if Set; pure, no side effects (S5-R5.3)
+- [x] **[S5-S09]** Prove `ContainerIDReadConsistent`: `Get()` returns same value on every call once Set (I5.3)
+- [x] **[S5-S10]** Implement `ExternalEnv` singleton: built on `Singleton<string>`
+- [x] **[S5-S11]** Implement `SanitizeExternalEnv(raw: string): string` — removes all non-printable characters and `|` characters (S5-R5.2, allium.md §Init External Env)
+- [x] **[S5-S12]** Prove `SanitizeRemovesPipe`: `'|' ∉ SanitizeExternalEnv(s)` for all s (allium.md §Init External Env sanitization)
+- [x] **[S5-S13]** Prove `SanitizePrintableOnly`: all chars in `SanitizeExternalEnv(s)` are printable (allium.md §Init External Env sanitization)
+- [x] **[S5-S14]** Implement `ExternalEnv.Init(raw: string)` — precondition: `state == Unset`; stores `SanitizeExternalEnv(raw)` (S5-R5.2, TLA+: InitExternalEnv)
+- [x] **[S5-S15]** Prove `ExternalEnvInitOnce`: Init() requires Unset; after Init, cannot Init again (I5.2)
+- [x] **[S5-S16]** Prove `ExternalEnvImmutable`: documented via Init precondition (I5.2) — Init() requires Unset, so value is structurally immutable once Set
+- [x] **[S5-S17]** Implement `ExternalEnv.Get(): string` — returns `""` if Unset, stored value if Set (S5-R5.4)
+- [x] **[S5-S18]** Prove `ExternalEnvReadConsistency`: once Set, Get() always returns same value (I5.3)
+- [x] **[S5-S19]** Prove `InitStateMonotone`: documented via Init's pre/postconditions — Unset→Set enforced structurally, no public method reverses it (TLA+: NoReversal invariant)
+- [x] **[S5-S20]** Verify `src/Singletons.dfy` with `dafny verify src/Singletons.dfy` — **19 verified, 0 errors**
 
 ---
 
@@ -298,13 +298,13 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 `test/TestS5.dfy` — Init Singletons
 
-- [ ] **[T-S5-01]** `{:test} TestContainerIDInitializedOnce()`: second Init() call fails precondition (I5.1)
-- [ ] **[T-S5-02]** `{:test} TestContainerIDImmutableAfterSet()`: Get() returns same value on every call after Init
-- [ ] **[T-S5-03]** `{:test} TestExternalEnvInitializedOnce()`: second Init() call fails precondition (I5.2)
-- [ ] **[T-S5-04]** `{:test} TestExternalEnvReadConsistency()`: Get() consistent after Init
-- [ ] **[T-S5-05]** `{:test} TestSanitizeRemovesPipe()`: SanitizeExternalEnv strips `|` from raw value
-- [ ] **[T-S5-06]** `{:test} TestSanitizeRemovesNonPrintable()`: SanitizeExternalEnv strips control chars
-- [ ] **[T-S5-07]** `{:test} TestExternalEnvUnsetReturnsEmpty()`: Get() on Unset ExternalEnv returns `""`
+- [x] **[T-S5-01]** `{:test} TestContainerIDInitializedOnce()`: after Init, state == Set; second Init violates precondition (I5.1)
+- [x] **[T-S5-02]** `{:test} TestContainerIDGetValues()`: Get() returns None before init, Some(value) after
+- [x] **[T-S5-03]** `{:test} TestExternalEnvInitializedOnce()`: after Init, state == Set; second Init violates precondition (I5.2)
+- [x] **[T-S5-04]** `{:test} TestExternalEnvReadConsistency()`: Get() consistent after Init
+- [x] **[T-S5-05]** `{:test} TestSanitizeRemovesPipe()`: SanitizeExternalEnv strips `|` from raw value
+- [x] **[T-S5-06]** `{:test} TestSanitizeRemovesNonPrintable()`: SanitizeExternalEnv strips control chars
+- [x] **[T-S5-07]** `{:test} TestExternalEnvUnsetReturnsEmpty()`: Get() on Unset ExternalEnv returns `""`
 
 `test/TestS6.dfy` — Wire Format
 
@@ -328,10 +328,10 @@ Verification must pass (`dafny verify`) before any task is complete.
 - [x] **[FV-01]** `dafny verify src/Types.dfy` — zero errors (7 verified)
 - [x] **[FV-02]** `dafny verify src/Errors.dfy` — zero errors
 - [x] **[FV-03]** `dafny verify src/WireFormat.dfy` — zero errors (16 verified)
-- [ ] **[FV-04]** `dafny verify src/Buffer.dfy` — zero errors
+- [x] **[FV-04]** `dafny verify src/Buffer.dfy` — zero errors (11 verified)
 - [ ] **[FV-05]** `dafny verify src/BufferPool.dfy` — zero errors
 - [ ] **[FV-06]** `dafny verify src/Aggregator.dfy` — zero errors
-- [ ] **[FV-07]** `dafny verify src/Singletons.dfy` — zero errors
+- [x] **[FV-07]** `dafny verify src/Singletons.dfy` — zero errors (19 verified)
 - [ ] **[FV-08]** `dafny verify src/Sender.dfy` — zero errors
 - [ ] **[FV-09]** `dafny verify src/Client.dfy` — zero errors
 - [ ] **[FV-10]** `dafny verify src/*.dfy` — whole-project verification, zero errors

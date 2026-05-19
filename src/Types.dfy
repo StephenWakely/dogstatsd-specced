@@ -4,8 +4,8 @@ module Types {
   // Generic option type (no stdlib in Dafny 3.x)
   datatype Option<T> = None | Some(value: T)
 
-  // Byte type: values 0..255 for wire serialization
-  type byte = x: int | 0 <= x < 256 witness 0
+  // Byte type shared across all modules
+  type byte = bv8
 
   // S6-T01: Metric types (spec S6, §Wire Format Summary)
   datatype MetricType = Gauge | Count | Histogram | Distribution | Set | Timing

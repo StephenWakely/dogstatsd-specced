@@ -190,6 +190,34 @@ For each subsystem, an intentional fault is designed to be caught by TLC:
 
 ---
 
+## Dafny Verification Results
+
+### src/Buffer.dfy (S3-B14)
+
+Run: `dafny verify src/Buffer.dfy`
+
+```
+Dafny program verifier finished with 11 verified, 0 errors
+```
+
+- **Status:** PASSED
+- **Verified:** 11 (constructor postconditions, WriteMetric rollback/append/valid proofs, Reset, IsEmpty, Bytes, NoBufferOverflow, NoElementOverflow lemmas)
+- **Errors:** 0
+- **Date:** 2026-05-19
+
+### src/Types.dfy (S6-T11 re-verified after Dafny 4.x migration)
+
+Run: `dafny verify src/Types.dfy`
+
+```
+Dafny program verifier finished with 7 verified, 0 errors
+```
+
+- **Status:** PASSED (all `function method` → `function` migration complete; `byte` type added)
+- **Date:** 2026-05-19
+
+---
+
 ## TLC Outcomes (As of 2026-05-19)
 
 | Model | Expected | Actual | Status |
