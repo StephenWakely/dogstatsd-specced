@@ -41,7 +41,9 @@ module WireFormat {
   }
 
   // Extern: byte encoding of a real number — concrete implementation outside Dafny
+  // Stub body compiles as fallback; linked Go/C# implementations override for production.
   function {:extern} RealToDecimalBytes(r: real): seq<byte>
+  { [] }
 
   // S6-W02: name as ASCII bytes (spec S6-W02)
   function SerializeName(name: string): seq<byte>
