@@ -174,9 +174,11 @@ module Aggregator {
     }
   }
 
-  // Extern: value serialization (concrete impl outside Dafny)
+  // Extern: value serialization (concrete impl outside Dafny; stub bodies compile as fallback)
   function {:extern} IntToString(n: int): string
+  { "" }
   function {:extern} RealToString(r: real): string
+  { "" }
 
   // ── Aggregator class (S2-A06) ────────────────────────────────────────────
 
