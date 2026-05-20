@@ -49,6 +49,22 @@ module TestS1 {
     // second Close returns ErrNoClient but state stays Closed
     var r2 := c.Close();
     expect c.state == Closed;
+    expect r2 == Err(ErrNoClient);   // restore: Close() postcondition guarantees this
+  }
+
+  // T-S1-04b: Close() returns Err(ErrNoClient) on every subsequent call — error value explicit
+  method {:test} TestCloseIdempotentReturnsErrNoClient()
+  {
+    var cfg := DefaultConfig();
+    var c := new Client.New(cfg);
+    var r1 := c.Close();
+    expect r1 == Ok(Unit);
+    // S1-C15 postcondition: old(state)==Closed ==> r==Err(ErrNoClient)
+    var r2 := c.Close();
+    expect r2 == Err(ErrNoClient);
+    // third call also returns error — not just second
+    var r3 := c.Close();
+    expect r3 == Err(ErrNoClient);
   }
 
   // T-S1-05: IsClosed() returns false before Close(), true after
