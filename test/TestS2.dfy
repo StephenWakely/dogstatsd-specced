@@ -72,8 +72,14 @@ module TestS2 {
     }
   }
 
-  // T-S2-05: Stop() prevents further samples — state is Stopped; SampleCount requires Running
-  method {:test} TestStopPreventsFurtherSamples()
+  // TestShardingInBounds is not a runtime test — it's covered by the compile-time proof
+  // lemma ShardIndexInBounds in Aggregator.dfy (S2-A10), which Dafny verifies statically.
+  // A {:test} version would only redundantly re-check what the proof already guarantees.
+
+  // T-S2-06: Stop disables SampleCount — postcondition state==Stopped is provable;
+  // calling SampleCount after Stop() would fail verification (requires state==Running).
+  // This test confirms Stop() sets state to Stopped at runtime.
+  method {:test} TestStopSetsStateStopped()
   {
     var agg := new Aggregator.New(1);
     var ctx := MetricContext("reqs", []);

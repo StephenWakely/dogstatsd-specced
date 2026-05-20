@@ -207,36 +207,36 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 `src/Client.dfy`
 
-- [ ] **[S1-C01]** Define `ClientState` datatype: `Open | Closed` (TLA+: `clientState`)
-- [ ] **[S1-C02]** Define `Client` class: `state: ClientState`, `aggregator: Aggregator`, `sender: Sender`, `config: DogStatsDConfig`, `containerID: ContainerID`, `externalEnv: ExternalEnv`, `ghost metricsSubmitted: set<MetricContext>`, `ghost metricsInFlight: set<MetricContext>`
-- [ ] **[S1-C03]** Define `Client.Valid()` predicate:
+- [x] **[S1-C01]** Define `ClientState` datatype: `Open | Closed` (TLA+: `clientState`)
+- [x] **[S1-C02]** Define `Client` class: `state: ClientState`, `aggregator: Aggregator`, `sender: Sender`, `config: DogStatsDConfig`, `containerID: ContainerID`, `externalEnv: ExternalEnv`, `ghost metricsSubmitted: set<MetricContext>`, `ghost metricsInFlight: set<MetricContext>`
+- [x] **[S1-C03]** Define `Client.Valid()` predicate:
   - `state == Closed ==> metricsSubmitted == {}`  (TLA+: ClosedClientNoPendingMetrics)
   - `state == Closed ==> aggregator.state == Stopped`  (TLA+: ClosedClientStoppedAggregator)
   - `state == Closed ==> sender.state == Stopped`  (TLA+: ClosedClientStoppedSender)
   - `aggregator.Valid() && sender.Valid()`
-- [ ] **[S1-C04]** Implement `Client.New(config: DogStatsDConfig): Client` — creates client in Open state, initializes aggregator (Running), sender (Running), initializes ExternalEnv singleton (S1-R1.1, TLA+: Init)
+- [x] **[S1-C04]** Implement `Client.New(config: DogStatsDConfig): Client` — creates client in Open state, initializes aggregator (Running), sender (Running), initializes ExternalEnv singleton (S1-R1.1, TLA+: Init)
   - Postcondition: `state == Open`, `aggregator.state == Running`, `sender.state == Running`, `Valid()`
-- [ ] **[S1-C05]** Implement `Client.SubmitGauge(ctx: MetricContext, value: real, rate: real)` — precondition: `state == Open`; returns `Err(ErrNoClient)` if Closed (S1-R1.2, R1.5, TLA+: SubmitMetric)
-- [ ] **[S1-C06]** Implement `Client.SubmitCount(ctx: MetricContext, value: nat, rate: real)` — same guards as SubmitGauge (S1-R1.2, R1.5)
-- [ ] **[S1-C07]** Implement `Client.SubmitSet(ctx: MetricContext, value: string, rate: real)` — same guards (S1-R1.2, R1.5)
-- [ ] **[S1-C08]** Implement `Client.SubmitHistogram(ctx: MetricContext, value: real, rate: real)` — same guards; routes to aggregator SampleBuffered if aggregation enabled (S1-R1.2, S2-R2.4)
-- [ ] **[S1-C09]** Implement `Client.SubmitDistribution(ctx: MetricContext, value: real, rate: real)` — same guards (S1-R1.2)
-- [ ] **[S1-C10]** Implement `Client.SubmitTiming(ctx: MetricContext, value: real, rate: real)` — same guards (S1-R1.2)
-- [ ] **[S1-C11]** Prove `SubmitRequiresOpen`: all Submit* methods have precondition `state == Open` — or return `ErrNoClient` if Closed (S1-R1.5)
-- [ ] **[S1-C12]** Prove `ClosedClientNoSubmit`: after Close(), all Submit* methods return `Err(ErrNoClient)` (allium.md §R1.5)
-- [ ] **[S1-C13]** Implement `Client.Flush(): Result<(), DogStatsDError>` — precondition: `state == Open`; flushes aggregator, flushes buffer, waits for sender to drain (S1-R1.3, TLA+: ClientFlush)
-- [ ] **[S1-C14]** Prove `FlushRequiresOpen`: Flush returns `Err(ErrNoClient)` if `state == Closed`
-- [ ] **[S1-C15]** Implement `Client.Close(): Result<(), DogStatsDError>` — transitions Open → Closed; flushes all pending metrics; stops aggregator; stops sender (S1-R1.4, TLA+: ClientClose)
+- [x] **[S1-C05]** Implement `Client.SubmitGauge(ctx: MetricContext, value: real, rate: real)` — precondition: `state == Open`; returns `Err(ErrNoClient)` if Closed (S1-R1.2, R1.5, TLA+: SubmitMetric)
+- [x] **[S1-C06]** Implement `Client.SubmitCount(ctx: MetricContext, value: nat, rate: real)` — same guards as SubmitGauge (S1-R1.2, R1.5)
+- [x] **[S1-C07]** Implement `Client.SubmitSet(ctx: MetricContext, value: string, rate: real)` — same guards (S1-R1.2, R1.5)
+- [x] **[S1-C08]** Implement `Client.SubmitHistogram(ctx: MetricContext, value: real, rate: real)` — same guards; routes to aggregator SampleBuffered if extendedAggregation (S1-R1.2, S2-R2.4)
+- [x] **[S1-C09]** Implement `Client.SubmitDistribution(ctx: MetricContext, value: real, rate: real)` — same guards; routes to SampleBuffered if extendedAggregation (S1-R1.2)
+- [x] **[S1-C10]** Implement `Client.SubmitTiming(ctx: MetricContext, value: real, rate: real)` — same guards; routes to SampleBuffered if extendedAggregation (S1-R1.2)
+- [x] **[S1-C11]** Prove `SubmitRequiresOpen`: all Submit* methods have precondition `state == Open` — or return `ErrNoClient` if Closed (S1-R1.5)
+- [x] **[S1-C12]** Prove `ClosedClientNoSubmit`: after Close(), all Submit* methods return `Err(ErrNoClient)` (allium.md §R1.5)
+- [x] **[S1-C13]** Implement `Client.Flush(): Result<(), DogStatsDError>` — precondition: `state == Open`; flushes aggregator, flushes buffer, waits for sender to drain (S1-R1.3, TLA+: ClientFlush)
+- [x] **[S1-C14]** Prove `FlushRequiresOpen`: Flush returns `Err(ErrNoClient)` if `state == Closed`
+- [x] **[S1-C15]** Implement `Client.Close(): Result<(), DogStatsDError>` — transitions Open → Closed; flushes all pending metrics; stops aggregator; stops sender (S1-R1.4, TLA+: ClientClose)
   - Postcondition: `state == Closed`, `aggregator.state == Stopped`, `sender.state == Stopped`, `metricsSubmitted == {}`
-- [ ] **[S1-C16]** Prove `CloseTransitionsState`: after Close(), `state == Closed` (S1-R1.4)
-- [ ] **[S1-C17]** Prove `CloseStopsAggregator`: after Close(), `aggregator.state == Stopped` (TLA+: ClosedClientStoppedAggregator)
-- [ ] **[S1-C18]** Prove `CloseStopsSender`: after Close(), `sender.state == Stopped` (TLA+: ClosedClientStoppedSender)
-- [ ] **[S1-C19]** Prove `ClosureFinality`: state never transitions from Closed to Open (allium.md §ClosureFinality)
-- [ ] **[S1-C20]** Prove `ClosedClientNoPendingMetrics`: `state == Closed ==> metricsSubmitted == {}` (TLA+: ClosedClientNoPendingMetrics)
-- [ ] **[S1-C21]** Implement `Client.IsClosed(): bool` — pure function, returns `state == Closed`, no side effects (S1-R1.6)
-- [ ] **[S1-C22]** Prove `IsClosedPure`: `IsClosed()` does not modify any state (S1-R1.6)
-- [ ] **[S1-C23]** Prove `ClientOpenInvariant`: while `state == Open`, submitted metrics are either in pipeline or dropped (never silently lost without telemetry update) — ghost proof using metricsSubmitted/metricsInFlight (allium.md §ClientOpenInvariant)
-- [ ] **[S1-C24]** Verify `src/Client.dfy` with `dafny verify src/Client.dfy`
+- [x] **[S1-C16]** Prove `CloseTransitionsState`: after Close(), `state == Closed` (S1-R1.4)
+- [x] **[S1-C17]** Prove `CloseStopsAggregator`: after Close(), `aggregator.state == Stopped` (TLA+: ClosedClientStoppedAggregator)
+- [x] **[S1-C18]** Prove `CloseStopsSender`: after Close(), `sender.state == Stopped` (TLA+: ClosedClientStoppedSender)
+- [x] **[S1-C19]** Prove `ClosureFinality`: state never transitions from Closed to Open (allium.md §ClosureFinality)
+- [x] **[S1-C20]** Prove `ClosedClientNoPendingMetrics`: `state == Closed ==> metricsSubmitted == {}` (TLA+: ClosedClientNoPendingMetrics)
+- [x] **[S1-C21]** Implement `Client.IsClosed(): bool` — pure function, returns `state == Closed`, no side effects (S1-R1.6)
+- [x] **[S1-C22]** Prove `IsClosedPure`: `IsClosed()` does not modify any state (S1-R1.6)
+- [x] **[S1-C23]** Prove `ClientOpenInvariant`: while `state == Open`, submitted metrics are either in pipeline or dropped (never silently lost without telemetry update) — ghost proof using metricsSubmitted/metricsInFlight (allium.md §ClientOpenInvariant)
+- [x] **[S1-C24]** Verify `src/Client.dfy` with `dafny verify src/Client.dfy` — **39 verified, 0 errors**
 
 ---
 
@@ -258,14 +258,14 @@ Verification must pass (`dafny verify`) before any task is complete.
 
 `test/TestS1.dfy` — Client Lifecycle
 
-- [ ] **[T-S1-01]** `{:test} TestNewClientIsOpen()`: `Client.New()` returns client with `state == Open` (rust-contract.md §S1 test_new_client_is_open)
-- [ ] **[T-S1-02]** `{:test} TestGaugeOnOpenSucceeds()`: SubmitGauge returns Ok when state == Open
-- [ ] **[T-S1-03]** `{:test} TestGaugeOnClosedReturnsError()`: SubmitGauge returns Err(ErrNoClient) after Close() (rust-contract.md §test_gauge_on_closed_client_returns_error)
-- [ ] **[T-S1-04]** `{:test} TestCloseIdempotent()`: second Close() call succeeds or is no-op (rust-contract.md §test_close_idempotent)
-- [ ] **[T-S1-05]** `{:test} TestIsClosedReflectsState()`: IsClosed() returns false before Close(), true after
-- [ ] **[T-S1-06]** `{:test} TestFlushOnOpenSendsPending()`: Flush() succeeds when Open
-- [ ] **[T-S1-07]** `{:test} TestFlushOnClosedReturnsError()`: Flush() returns error when Closed
-- [ ] **[T-S1-08]** `{:test} TestAllMetricTypesOnClosed()`: all six Submit* methods return ErrNoClient when Closed
+- [x] **[T-S1-01]** `{:test} TestNewClientIsOpen()`: `Client.New()` returns client with `state == Open` (rust-contract.md §S1 test_new_client_is_open)
+- [x] **[T-S1-02]** `{:test} TestGaugeOnOpenSucceeds()`: SubmitGauge returns Ok when state == Open
+- [x] **[T-S1-03]** `{:test} TestGaugeOnClosedReturnsError()`: SubmitGauge returns Err(ErrNoClient) after Close() (rust-contract.md §test_gauge_on_closed_client_returns_error)
+- [x] **[T-S1-04]** `{:test} TestCloseIdempotent()`: second Close() call leaves state == Closed (rust-contract.md §test_close_idempotent)
+- [x] **[T-S1-05]** `{:test} TestIsClosedReflectsState()`: IsClosed() returns false before Close(), true after
+- [x] **[T-S1-06]** `{:test} TestFlushOnOpenSendsPending()`: Flush() succeeds when Open
+- [x] **[T-S1-07]** `{:test} TestFlushOnClosedReturnsError()`: Flush() returns error when Closed
+- [x] **[T-S1-08]** `{:test} TestAllMetricTypesOnClosed()`: all six Submit* methods return ErrNoClient when Closed
 
 `test/TestS2.dfy` — Aggregator
 
