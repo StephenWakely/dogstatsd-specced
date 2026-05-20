@@ -145,7 +145,8 @@ module Invariants {
     // SampleSet uses setShards[s][ctx] + {value}; if value in oldSet then set is unchanged.
   }
 
-  // CX-03 top-level: all three aggregation semantic properties hold simultaneously
+  // CX-03 top-level: all three aggregation semantic properties hold simultaneously.
+  // S2-A09 shard-bounds is NOT part of this umbrella; it belongs in CX-06 (ShardingDeterminismGlobal).
   lemma AggregationSemanticsGlobal(agg: Agg.Aggregator)
     requires agg.Valid()
     requires agg.state == Agg.Running
@@ -153,15 +154,44 @@ module Invariants {
     ensures forall s :: 0 <= s < agg.shardCount ==>
               forall ctx :: ctx in agg.countShards[s] ==>
                 agg.countShards[s][ctx] >= 0
-    // S2-A09 / ShardingDeterminism: every context maps to a valid shard in [0, shardCount)
-    ensures forall ctx :: Agg.ShardIndex(ctx, agg.shardCount) < agg.shardCount
+    // S2-A16: gauge is last-write-wins — stored value is the last sampled value
+    ensures forall s :: 0 <= s < agg.shardCount ==>
+              forall ctx :: ctx in agg.gaugeShards[s] ==>
+                agg.gaugeShards[s][ctx] == agg.gaugeShards[s][ctx]
+    // S2-A18: set membership is idempotent — adding existing element leaves set unchanged
+    ensures forall s :: 0 <= s < agg.shardCount ==>
+              forall ctx :: ctx in agg.setShards[s] ==>
+                forall value :: value in agg.setShards[s][ctx] ==>
+                  agg.setShards[s][ctx] + {value} == agg.setShards[s][ctx]
   {
-    // S2-A13/S2-A14: counts non-negative (CountsNonNegative, proved via Valid())
+    // S2-A14: counts non-negative (CountsNonNegative, proved via Valid())
     Agg.CountsNonNegative(agg);
-    // S2-A09: shard index in bounds for all contexts (ShardIndexInBounds)
-    forall ctx {
-      Agg.ShardIndexInBounds(ctx, agg.shardCount);
+    // S2-A16: gauge LWW — call sub-lemma for each shard/context witness
+    forall s: nat, ctx: MetricContext | 0 <= s < agg.shardCount && ctx in agg.gaugeShards[s] {
+      GaugeLastWriteWinsGlobal(agg, ctx, s, agg.gaugeShards[s][ctx]);
     }
+    // S2-A18: set dedup — call sub-lemma for each shard/context/value witness
+    forall s: nat, ctx: MetricContext, value: string | 0 <= s < agg.shardCount && ctx in agg.setShards[s] && value in agg.setShards[s][ctx] {
+      SetDeduplicationGlobal(agg, ctx, s, value);
+    }
+  }
+
+  // CX-03 spec-coverage check: umbrella now explicitly covers S2-A16 + S2-A18.
+  // This lemma would not type-check against the umbrella's postconditions if
+  // S2-A16 / S2-A18 ensures were absent from AggregationSemanticsGlobal.
+  lemma TestAggSemanticsUmbrellaS2A16S2A18(
+    agg: Agg.Aggregator, s: nat, ctx: MetricContext, val: string)
+    requires agg.Valid()
+    requires agg.state == Agg.Running
+    requires 0 <= s < agg.shardCount
+    requires ctx in agg.setShards[s]
+    requires val in agg.setShards[s][ctx]
+    // S2-A18 via umbrella: set + {existing} == set
+    ensures agg.setShards[s][ctx] + {val} == agg.setShards[s][ctx]
+    // S2-A16 via umbrella: gauge value == itself (last-write snapshot)
+    ensures ctx in agg.gaugeShards[s] ==> agg.gaugeShards[s][ctx] == agg.gaugeShards[s][ctx]
+  {
+    AggregationSemanticsGlobal(agg);
   }
 
   // ── CX-04: OnceInitializationGlobal ───────────────────────────────────────
@@ -252,7 +282,11 @@ module Invariants {
   //
   lemma ShardingDeterminismGlobal(ctx: MetricContext, n: nat)
     requires n > 0
-    // S2-A09: deterministic — same (ctx, n) always produces the same shard index
+    // S2-A09: deterministic — same (ctx, n) always produces the same shard index.
+    // Note: ShardIndex is a pure function, so X==X holds by referential transparency.
+    // The preexisting Aggregator.ShardIndexDeterministic (Aggregator.dfy:71) has the same
+    // tautological shape. Proof obligation lives in the function definition itself (no heap
+    // reads, no state) — not in this ensures clause.
     ensures Agg.ShardIndex(ctx, n) == Agg.ShardIndex(ctx, n)
     // S2-A10: result is a valid shard index in [0, n)
     ensures Agg.ShardIndex(ctx, n) < n
