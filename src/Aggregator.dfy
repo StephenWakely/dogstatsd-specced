@@ -341,6 +341,13 @@ module Aggregator {
       // other buffered entries unchanged
       ensures forall c' :: c' != ctx && c' in old(buffered) ==>
                 c' in buffered && buffered[c'] == old(buffered)[c']
+      // reservoir: append when below cap, keep otherwise
+      ensures var oldSamples := if ctx in old(buffered) then old(buffered)[ctx].samples else [];
+              (maxSamples > 0 && |oldSamples| < maxSamples) ==>
+                buffered[ctx].samples == oldSamples + [value]
+      ensures var oldSamples := if ctx in old(buffered) then old(buffered)[ctx].samples else [];
+              !(maxSamples > 0 && |oldSamples| < maxSamples) ==>
+                buffered[ctx].samples == oldSamples
     {
       var oldState   := if ctx in buffered then buffered[ctx]
                         else BufferedMetricState([], 0);
@@ -406,6 +413,7 @@ module Aggregator {
       assert UniqueWireMetrics(cgs);
 
       // Extend: cgs ++ bufferedResult — Histogram is different from Count, Gauge, Set
+      assert forall k :: 0 <= k < |cgs| ==> cgs[k].metricType == Count || cgs[k].metricType == Gauge || cgs[k].metricType == Set;
       ConcatCGSWithBuffered(cgs, bufferedResult);
       result := cgs + bufferedResult;
 
@@ -761,14 +769,7 @@ module Aggregator {
     }
   }
 
-  // ── Standalone lemmas for S2-A12, S2-A25, S2-A26 ───────────────────────
-
-  // S2-A12: SampleCount only callable when Running — enforced by requires state==Running
-  lemma SampleCountPreservesRunning(agg: Aggregator)
-    requires agg.Valid()
-    requires agg.state == Stopped
-    ensures agg.state != Running
-  {}
+  // ── Standalone lemmas for S2-A13, S2-A25, S2-A26 ───────────────────────
 
   // S2-A13: all counts non-negative — follows from Valid()
   lemma CountsNonNegative(agg: Aggregator)
