@@ -1,6 +1,6 @@
 // src/Invariants.dfy — CX-01 through CX-06: cross-subsystem integration proofs
 //
-// Coverage matrix: all 6 TLA+ Inv conjuncts from spec/model.tla, plus 10 invariant-like
+// Coverage matrix: all 6 TLA+ Inv conjuncts from spec/model.tla, plus 8 invariant-like
 // properties from spec/allium.md, mapped to Dafny lemmas/predicates.
 //
 // TLA+ Inv conjuncts (spec/model.tla line 300):
