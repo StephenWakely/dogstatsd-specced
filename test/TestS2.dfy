@@ -1,4 +1,4 @@
-// test/TestS2.dfy — T-S2-01 through T-S2-06: Aggregator runtime tests
+// test/TestS2.dfy — T-S2-01 through T-S2-07: Aggregator runtime tests
 // Spec: allium.md §Part 2 (S2)
 include "../src/Aggregator.dfy"
 
@@ -45,7 +45,8 @@ module TestS2 {
     expect |agg.setShards[s][ctx]| == 1;
   }
 
-  // T-S2-04: flush emits one entry per (ctx, type) — multiple samples on same ctx produce one result (I2.2)
+  // T-S2-04: flush emits one entry per (ctx, type) — multiple samples on same ctx → one result (I2.2)
+  //          also verifies FlushResetsShards (S2-A23): all shards empty after flush
   method {:test} TestFlushEmitsOnePerContext()
   {
     var agg := new Aggregator.New(4);
@@ -59,6 +60,16 @@ module TestS2 {
     expect result[0].name       == ctx.name;
     expect result[0].tags       == ctx.tags;
     expect result[0].metricType == Count;
+    // S2-A23: all shards reset after flush
+    var s := 0;
+    while s < agg.shardCount
+      decreases agg.shardCount - s
+    {
+      expect agg.countShards[s] == map[];
+      expect agg.gaugeShards[s] == map[];
+      expect agg.setShards[s]   == map[];
+      s := s + 1;
+    }
   }
 
   // T-S2-05: Stop() prevents further samples — state is Stopped; SampleCount requires Running
@@ -73,14 +84,47 @@ module TestS2 {
     // SampleCount(ctx, 1) here would fail requires state==Running at verification time.
   }
 
-  // T-S2-06: ShardIndex is deterministic — same ctx and n always returns same shard
-  method {:test} TestShardingIsDeterministic()
+  // T-S2-06: ShardIndex in-bounds — result in [0, n) for distinct contexts (behavioral)
+  method {:test} TestShardingInBounds()
   {
-    var ctx  := MetricContext("orders", ["region:us"]);
-    var n    := 8;
-    var idx1 := ShardIndex(ctx, n);
-    var idx2 := ShardIndex(ctx, n);
-    expect idx1 == idx2;
+    var n := 8;
+    var ctx1 := MetricContext("orders",  ["region:us"]);
+    var ctx2 := MetricContext("errors",  ["region:eu"]);
+    var ctx3 := MetricContext("latency", ["service:api"]);
+    var idx1 := ShardIndex(ctx1, n);
+    var idx2 := ShardIndex(ctx2, n);
+    var idx3 := ShardIndex(ctx3, n);
+    expect 0 <= idx1 < n;
+    expect 0 <= idx2 < n;
+    expect 0 <= idx3 < n;
+  }
+
+  // T-S2-07: SampleBuffered reservoir cap — below cap appends, at cap keeps samples unchanged,
+  //           totalSamples increments in both cases (R2.4, I2.6)
+  method {:test} TestSampleBufferedReservoir()
+  {
+    var agg := new Aggregator.New(4);
+    var ctx := MetricContext("latency", ["service:web"]);
+    var cap := 3;
+
+    // Below cap: each sample appends
+    agg.SampleBuffered(ctx, 1.0, cap);
+    expect ctx in agg.buffered;
+    expect agg.buffered[ctx].totalSamples == 1;
+    expect agg.buffered[ctx].samples == [1.0];
+
+    agg.SampleBuffered(ctx, 2.0, cap);
+    expect agg.buffered[ctx].totalSamples == 2;
+    expect agg.buffered[ctx].samples == [1.0, 2.0];
+
+    agg.SampleBuffered(ctx, 3.0, cap);
+    expect agg.buffered[ctx].totalSamples == 3;
+    expect agg.buffered[ctx].samples == [1.0, 2.0, 3.0];
+
+    // At cap: samples unchanged, totalSamples still increments
+    agg.SampleBuffered(ctx, 4.0, cap);
+    expect agg.buffered[ctx].totalSamples == 4;
+    expect agg.buffered[ctx].samples == [1.0, 2.0, 3.0];
   }
 
 }
