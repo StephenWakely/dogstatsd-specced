@@ -49,6 +49,7 @@ module TestS1 {
     // second Close returns ErrNoClient but state stays Closed
     var r2 := c.Close();
     expect c.state == Closed;
+    expect r2 == Err(ErrNoClient);
   }
 
   // T-S1-05: IsClosed() returns false before Close(), true after
