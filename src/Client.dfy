@@ -90,6 +90,7 @@ module Client {
       ensures sender.state     == Snd.Running
       ensures metricsSubmitted == {}
       ensures metricsInFlight  == {}
+      ensures fresh(aggregator) && fresh(sender)
     {
       var agg := new Agg.Aggregator.New(4);
       var snd := new Snd.Sender.New(cfg.senderQueueSize);
@@ -108,13 +109,15 @@ module Client {
     // ── Submit methods ─────────────────────────────────────────────────────────
 
     // S1-C05: SubmitGauge (spec S1-R1.2, R1.5)
+    // rate: sampling deferred — recorded for future wire-format use, not applied here
     method SubmitGauge(ctx: MetricContext, value: real, rate: real)
         returns (r: Result<Unit>)
       requires Valid()
       modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
-      ensures sender    == old(sender)
+      ensures state      == old(state)
+      ensures aggregator == old(aggregator)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
       ensures old(state) == Open   ==> ctx in metricsSubmitted
@@ -132,13 +135,15 @@ module Client {
     }
 
     // S1-C06: SubmitCount (spec S1-R1.2, R1.5)
+    // rate: sampling deferred — recorded for future wire-format use, not applied here
     method SubmitCount(ctx: MetricContext, value: nat, rate: real)
         returns (r: Result<Unit>)
       requires Valid()
       modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
-      ensures sender    == old(sender)
+      ensures state      == old(state)
+      ensures aggregator == old(aggregator)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
       ensures old(state) == Open   ==> ctx in metricsSubmitted
@@ -156,13 +161,15 @@ module Client {
     }
 
     // S1-C07: SubmitSet (spec S1-R1.2, R1.5)
+    // rate: sampling deferred — recorded for future wire-format use, not applied here
     method SubmitSet(ctx: MetricContext, value: string, rate: real)
         returns (r: Result<Unit>)
       requires Valid()
       modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
-      ensures sender    == old(sender)
+      ensures state      == old(state)
+      ensures aggregator == old(aggregator)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
       ensures old(state) == Open   ==> ctx in metricsSubmitted
@@ -179,15 +186,17 @@ module Client {
       r := Ok(Unit);
     }
 
-    // S1-C08: SubmitHistogram — routes to SampleBuffered when aggregationEnabled
-    // (spec S1-R1.2, S2-R2.4)
+    // S1-C08: SubmitHistogram — routes to SampleBuffered when extendedAggregation
+    // (spec S1-R1.2, S2-R2.4; extendedAggregation covers histogram/distribution/timing)
+    // rate: sampling deferred — recorded for future wire-format use, not applied here
     method SubmitHistogram(ctx: MetricContext, value: real, rate: real)
         returns (r: Result<Unit>)
       requires Valid()
       modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
-      ensures sender    == old(sender)
+      ensures state      == old(state)
+      ensures aggregator == old(aggregator)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
       ensures old(state) == Open   ==> ctx in metricsSubmitted
@@ -196,7 +205,7 @@ module Client {
         r := Err(ErrNoClient);
         return;
       }
-      if config.aggregationEnabled {
+      if config.extendedAggregation {
         aggregator.SampleBuffered(ctx, value, config.maxSamplesPerContext);
       }
       metricsSubmitted := metricsSubmitted + {ctx};
@@ -205,14 +214,16 @@ module Client {
     }
 
     // S1-C09: SubmitDistribution (spec S1-R1.2)
+    // extendedAggregation enables reservoir sampling (same flag as Histogram/Timing per spec)
+    // rate: sampling deferred — recorded for future wire-format use, not applied here
     method SubmitDistribution(ctx: MetricContext, value: real, rate: real)
         returns (r: Result<Unit>)
       requires Valid()
-      modifies this
+      modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
+      ensures state      == old(state)
       ensures aggregator == old(aggregator)
-      ensures sender    == old(sender)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
       ensures old(state) == Open   ==> ctx in metricsSubmitted
@@ -221,20 +232,25 @@ module Client {
         r := Err(ErrNoClient);
         return;
       }
+      if config.extendedAggregation {
+        aggregator.SampleBuffered(ctx, value, config.maxSamplesPerContext);
+      }
       metricsSubmitted := metricsSubmitted + {ctx};
       metricsInFlight  := metricsInFlight  + {ctx};
       r := Ok(Unit);
     }
 
     // S1-C10: SubmitTiming (spec S1-R1.2)
+    // extendedAggregation enables reservoir sampling (same flag as Histogram/Distribution per spec)
+    // rate: sampling deferred — recorded for future wire-format use, not applied here
     method SubmitTiming(ctx: MetricContext, value: real, rate: real)
         returns (r: Result<Unit>)
       requires Valid()
-      modifies this
+      modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
+      ensures state      == old(state)
       ensures aggregator == old(aggregator)
-      ensures sender    == old(sender)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
       ensures old(state) == Open   ==> ctx in metricsSubmitted
@@ -242,6 +258,9 @@ module Client {
       if state == Closed {
         r := Err(ErrNoClient);
         return;
+      }
+      if config.extendedAggregation {
+        aggregator.SampleBuffered(ctx, value, config.maxSamplesPerContext);
       }
       metricsSubmitted := metricsSubmitted + {ctx};
       metricsInFlight  := metricsInFlight  + {ctx};
@@ -256,8 +275,9 @@ module Client {
       requires Valid()
       modifies this, aggregator
       ensures Valid()
-      ensures state     == old(state)
-      ensures sender    == old(sender)
+      ensures state      == old(state)
+      ensures aggregator == old(aggregator)
+      ensures sender     == old(sender)
       ensures old(state) == Closed ==> r == Err(ErrNoClient)
       ensures old(state) == Open   ==> r == Ok(Unit)
     {
@@ -279,6 +299,8 @@ module Client {
       modifies this, aggregator, sender
       ensures Valid()
       ensures state            == Closed
+      ensures aggregator       == old(aggregator)
+      ensures sender           == old(sender)
       ensures aggregator.state == Agg.Stopped
       ensures sender.state     == Snd.Stopped
       ensures metricsSubmitted == {}
@@ -335,7 +357,9 @@ module Client {
   {}
 
   // S1-C14: FlushRequiresOpen — Flush returns ErrNoClient when Closed
-  // Proved structurally by the guard in Flush body; lemma captures the state invariant.
+  // Structural argument: the guard `if state == Closed { return Err(ErrNoClient) }` fires
+  // before any aggregator/sender interaction. This lemma captures the precondition invariant
+  // that a Closed client cannot be Open — the disjoint cases prove the return path.
   lemma FlushRequiresOpen(c: Client)
     requires c.Valid()
     requires c.state == Closed
@@ -343,8 +367,11 @@ module Client {
   {}
 
   // S1-C19: ClosureFinality — state never transitions Closed → Open
-  // Only the constructor sets state = Open. Close() sets Open → Closed.
-  // No method has a postcondition `state == Open`, so reversal is impossible.
+  // Structural argument: only `Client.New` sets state = Open (constructor postcondition).
+  // `Close()` transitions Open → Closed and has postcondition `state == Closed`.
+  // No other method has a postcondition `state == Open` or writes `state := Open`.
+  // Therefore state is monotone: once Closed it cannot become Open again.
+  // (spec §ClosureFinality; TLA+ action guards enforce this at model level.)
   lemma ClosureFinality(c: Client)
     requires c.Valid()
     requires c.state == Closed

@@ -85,6 +85,10 @@ module TestS2 {
     expect |result| == 0;
   }
 
+  // TestShardingInBounds is not a runtime test — it's covered by the compile-time proof
+  // lemma ShardIndexInBounds in Aggregator.dfy (S2-A10), which Dafny verifies statically.
+  // A {:test} version would only redundantly re-check what the proof already guarantees.
+
   // T-S2-06: Stop disables SampleCount — postcondition state==Stopped is provable;
   // calling SampleCount after Stop() would fail verification (requires state==Running).
   // This test confirms Stop() sets state to Stopped at runtime.
