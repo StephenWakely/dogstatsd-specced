@@ -1,14 +1,20 @@
 // src/Invariants.dfy — CX-01 through CX-06: cross-subsystem integration proofs
 //
-// All 16 TLA+ invariants from spec/model.tla mapped to Dafny lemmas/predicates:
-//   ClosedClientNoPendingMetrics  → S1-C20  Client.ClosedClientNoPendingMetrics
-//   ClosedClientStoppedAggregator → S1-C17  Client.Valid(): Closed ==> agg.Stopped
-//   ClosedClientStoppedSender     → S1-C18  Client.Valid(): Closed ==> snd.Stopped
-//   BufferNotOverflow             → S3-B08  Buffer.NoBufferOverflow
-//   elementCount≤MaxBufferElements→ S3-B09  Buffer.NoElementOverflow
-//   poolSize≤BufferPoolCapacity   → S3-P07  BufferPool.ReturnRespectsCapacity
+// Coverage matrix: all 6 TLA+ Inv conjuncts from spec/model.tla, plus 8 invariant-like
+// properties from spec/allium.md, mapped to Dafny lemmas/predicates.
+//
+// TLA+ Inv conjuncts (spec/model.tla line 300):
+//   ClosedClientNoPendingMetrics  → S1-C20  Client.ClosedClientNoPendingMetrics  [CX-05]
+//   ClosedClientStoppedAggregator → S1-C17  Client.Valid(): Closed ==> agg.Stopped [CX-05]
+//   ClosedClientStoppedSender     → S1-C18  Client.Valid(): Closed ==> snd.Stopped  [CX-05]
+//   BufferNotOverflow (3 parts):
+//     bufferLen≤MaxBufferSize     → S3-B08  Buffer.NoBufferOverflow               [CX-02]
+//     elementCount≤MaxBufferElems → S3-B09  Buffer.NoElementOverflow
+//     poolSize≤BufferPoolCapacity → S3-P07  BufferPool.ReturnRespectsCapacity
 //   QueueNotOverflow              → S4-R08  Sender.EnqueueNoOverflow
-//   InitStateConsistent           → S5-S03+S5-S19  Singleton.Valid(), structural
+//   InitStateConsistent           → S5-S03+S5-S19  Singleton.Valid(), structural  [CX-04]
+//
+// allium.md invariant-like properties (not in TLA+ Inv but spec-mandated):
 //   NoContainerIDChange           → S5-S07  structural (ContainerID.Init precondition)
 //   NoExternalEnvChange           → S5-S16  structural (ExternalEnv.Init precondition)
 //   TransactionalWrites           → S3-B05+CX-02  WriteMetric rollback + BufferTransactionalityGlobal
