@@ -180,6 +180,15 @@ module Aggregator {
   function {:extern} RealToString(r: real): string
   { "" }
 
+  // Deterministic element selection from a non-empty set<MetricContext>.
+  // Replaces :| (assign-such-that) for --enforce-determinism / Rust compilation.
+  // Extern implementations must return a consistent canonical element (e.g. lexicographically
+  // smallest by name then tags). Stub body is never executed; verifier trusts the ensures.
+  function {:extern} {:axiom} PickContextFromSet(s: set<MetricContext>): MetricContext
+    requires s != {}
+    ensures PickContextFromSet(s) in s
+  { MetricContext("", []) }
+
   // ── Aggregator class (S2-A06) ────────────────────────────────────────────
 
   class Aggregator {
@@ -476,7 +485,7 @@ module Aggregator {
           invariant emittedCtxs !! emittedFromShard
           decreases remaining
         {
-          var ctx :| ctx in remaining;
+          var ctx := PickContextFromSet(remaining);
           // ctx !in emittedCtxs: ShardIndex(ctx,n)==si, emittedCtxs has ShardIndex<si
           assert ShardIndex(ctx, shardCount) == si;
           assert ctx !in emittedCtxs;
@@ -556,7 +565,7 @@ module Aggregator {
           invariant emittedCtxs !! emittedFromShard
           decreases remaining
         {
-          var ctx :| ctx in remaining;
+          var ctx := PickContextFromSet(remaining);
           assert ShardIndex(ctx, shardCount) == si;
           assert ctx !in emittedCtxs;
           assert ctx !in emittedFromShard;
@@ -629,7 +638,7 @@ module Aggregator {
           invariant emittedCtxs !! emittedFromShard
           decreases remaining
         {
-          var ctx :| ctx in remaining;
+          var ctx := PickContextFromSet(remaining);
           assert ShardIndex(ctx, shardCount) == si;
           assert ctx !in emittedCtxs;
           assert ctx !in emittedFromShard;
@@ -676,7 +685,7 @@ module Aggregator {
         invariant emittedCtxs !! remaining
         decreases remaining
       {
-        var ctx :| ctx in remaining;
+        var ctx := PickContextFromSet(remaining);
         assert ctx !in emittedCtxs;
         assert MetricContext(ctx.name, ctx.tags) == ctx;
 

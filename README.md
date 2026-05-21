@@ -73,6 +73,38 @@ dafny test test/TestS6.dfy
 dafny verify src/*.dfy test/*.dfy
 ```
 
+## Code Generation
+
+A `Makefile` generates target-language source from the verified Dafny:
+
+```bash
+make go      # → out/dogstatsd-go/
+make python  # → out/dogstatsd-py/
+make rust    # → out/dogstatsd-rs/  (requires --enforce-determinism)
+make verify  # run full Dafny proof verification
+make clean   # remove out/
+```
+
+### Determinism and Rust
+
+Rust compilation requires `--enforce-determinism`, which forbids the Dafny
+assign-such-that operator (`:|`). This codebase is fully determinism-clean:
+
+- **`Sender.dfy`** — ghost proof body replaced with a pure `FirstIndexOf`
+  function that finds a sequence index by linear scan.
+- **`Aggregator.dfy`** — set-key iteration replaced with `PickContextFromSet`,
+  declared `{:extern} {:axiom}`. Dafny's type theory has no built-in
+  deterministic enumeration for mathematical sets; the extern contract
+  (`ensures PickContextFromSet(s) in s`) is trusted by the verifier and must
+  be satisfied by the target-language implementation.
+
+**Extern implementations required for compiled Rust:** the generated
+`out/dogstatsd-rs/` source calls `PickContextFromSet` as an external Rust
+function. A correct, deterministic implementation sorts keys
+lexicographically by `(name, tags)` and returns the first element.
+Equivalent stubs are needed for `IntToString` and `RealToString` (already
+declared extern in `Aggregator.dfy`).
+
 ## Spec Traceability
 
 Every Dafny method carries a comment linking it to its spec origin:

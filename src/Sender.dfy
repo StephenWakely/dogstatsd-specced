@@ -10,6 +10,18 @@ module Sender {
   import opened Buffer
   import opened Types
 
+  // Deterministic first-occurrence search over a sequence.
+  // Replaces :| (assign-such-that) for --enforce-determinism / Rust compilation.
+  function FirstIndexOf<T(==)>(s: seq<T>, x: T): nat
+    requires x in s
+    decreases |s|
+    ensures FirstIndexOf(s, x) < |s|
+    ensures s[FirstIndexOf(s, x)] == x
+  {
+    if s[0] == x then 0
+    else 1 + FirstIndexOf(s[1..], x)
+  }
+
   // S4-R01: sender lifecycle state (TLA+: senderState)
   datatype SenderState = Running | Stopped
 
@@ -235,7 +247,7 @@ module Sender {
           ensures b.Valid()
           ensures (b as object) != (transport as object)
         {
-          var i :| 0 <= i < |queue| && queue[i] == b;
+          var i := FirstIndexOf(queue, b);
           assert prevQueue[1..][i] == prevQueue[i + 1];
           assert b == prevQueue[i + 1];
           assert b in prevQueue;
